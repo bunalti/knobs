@@ -1,26 +1,19 @@
-| Supported Targets | ESP32 | ESP32-C3 |
-| ----------------- | ----- | -------- |
+| Supported Targets | ESP32-S3 | 
+| ----------------- | ----- | 
 
-# ESP-IDF Gatt Server Service Table Example
+# ESP-IDF Knobs
 
-This example shows how to create a GATT service with an attribute table defined in one place. Provided API releases the user from adding attributes one by one as implemented in BLUEDROID. A demo of the other method to create the attribute table is presented in [gatt_server_demo](../gatt_server).
+This program is for controlling a MIDI knobs device housing 16 Knobs. It is possible to interface with either USB or BLE
 
-Please, check this [tutorial](tutorial/Gatt_Server_Service_Table_Example_Walkthrough.md) for more information about this example.
+## How to Use 
 
-## How to Use Example
-
-Before project configuration and build, be sure to set the correct chip target using:
-
-```bash
-idf.py set-target <chip_name>
-```
+There is seperate programs for each task with its header and c file. Each task is executed in the main.c file using FreeRTOS.
 
 ### Hardware Required
 
-* A development board with ESP32/ESP32-C3 SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
-* A USB cable for Power supply and programming
-
-See [Development Boards](https://www.espressif.com/en/products/devkits) for more information about it.
+* ESP32-S3 DevkitC or any other board housing ESP32-S3 chip
+* Two USB cables
+* 16 x Rotary Potentiometers
 
 ### Build and Flash
 
@@ -28,22 +21,49 @@ Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
 
 (To exit the serial monitor, type ``Ctrl-]``.)
 
-See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
+
 
 ## Example Output
 
 ```
-I (0) cpu_start: Starting scheduler on APP CPU.
-I (512) BTDM_INIT: BT controller compile version [1342a48]
-I (522) system_api: Base MAC address is not set
-I (522) system_api: read default base MAC address from EFUSE
-I (522) phy_init: phy_version 4670,719f9f6,Feb 18 2021,17:07:07
-I (942) GATTS_TABLE_DEMO: create attribute table successfully, the number handle = 8
+I (550) BLEMIDI: create attribute table successfully, the number handle = 4
 
-I (942) GATTS_TABLE_DEMO: SERVICE_START_EVT, status 0, service_handle 40
-I (962) GATTS_TABLE_DEMO: advertising start successfully
+I (560) BLEMIDI: SERVICE_START_EVT, status 0, service_handle 40
+I (560) BLEMIDI: advertising start successfully
+I (560) Knobs: BLE MIDI Driver initialized successfully
+I (570) Knobs: USB initialization
+I (570) tusb_desc: 
+┌─────────────────────────────────┐
+│  USB Device Descriptor Summary  │
+├───────────────────┬─────────────┤
+│bDeviceClass       │ 0           │
+├───────────────────┼─────────────┤
+│bDeviceSubClass    │ 0           │
+├───────────────────┼─────────────┤
+│bDeviceProtocol    │ 0           │
+├───────────────────┼─────────────┤
+│bMaxPacketSize0    │ 64          │
+├───────────────────┼─────────────┤
+│idVendor           │ 0xcafe      │
+├───────────────────┼─────────────┤
+│idProduct          │ 0x4008      │
+├───────────────────┼─────────────┤
+│bcdDevice          │ 0x100       │
+├───────────────────┼─────────────┤
+│iManufacturer      │ 0x1         │
+├───────────────────┼─────────────┤
+│iProduct           │ 0x2         │
+├───────────────────┼─────────────┤
+│iSerialNumber      │ 0x3         │
+├───────────────────┼─────────────┤
+│bNumConfigurations │ 0x1         │
+└───────────────────┴─────────────┘
+I (740) TinyUSB: TinyUSB Driver installed
+I (750) Knobs: USB initialization DONE
+I (750) gpio: GPIO[3]| InputEn: 0| OutputEn: 0| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0 
+I (760) ADC DMA: adc_pattern[0].atten is :0
+I (760) ADC DMA: adc_pattern[0].channel is :2
+I (770) ADC DMA: adc_pattern[0].unit is :0
 ```
 
-## Troubleshooting
 
-For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
