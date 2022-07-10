@@ -8,6 +8,8 @@
   "idf.flashType": "UART",
   "files.associations": {
     "esp_task_wdt.h": "c",
-    "esp_timer.h": "c"
+    "esp_timer.h": "c",
+    "*.inc": "c",
+    "esp_bt.h": "c"
   }
 }

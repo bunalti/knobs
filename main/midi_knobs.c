@@ -72,7 +72,7 @@ static adc_channel_t channel[3] = {ADC1_CHANNEL_2, ADC1_CHANNEL_3, (ADC2_CHANNEL
 
 static const int USB_SUSPEND = BIT0;
 static EventGroupHandle_t  xUSBMidiEventGroup;
-
+static EventGroupHandle_t  xBLEMidiEventGroup;
 
 //--------------------------------------------------------------------+
 // Task Handlers
@@ -97,6 +97,7 @@ static void vBLEMidiWriteTask(void *pvParameters)
   xLastExecutionTime = xTaskGetTickCount();
 
   while( 1 ) {
+    ESP_LOGI("BLE Midi Write Task","EventBits: %d",xEventGroupGetBits(xBLEMidiEventGroup));
     ESP_ERROR_CHECK(esp_task_wdt_reset());
     vTaskDelayUntil(&xLastExecutionTime, 500 / portTICK_RATE_MS);
 
@@ -214,9 +215,6 @@ void callback_midi_message_received(uint8_t blemidi_port, uint16_t timestamp, ui
     }
   }
 }
-
-
-
 
 // Invoked when device is mounted
 void tud_mount_cb(void)
@@ -430,9 +428,11 @@ static void vADCReadTask(void *pvParameters)
 void app_main()
 {
   
-
+  
   // install BLE MIDI service
-  int status = blemidi_init(callback_midi_message_received);
+  xBLEMidiEventGroup = xEventGroupCreate();
+  ESP_ERROR_CHECK((xBLEMidiEventGroup == NULL ? ESP_FAIL: ESP_OK));
+  int status = blemidi_init(callback_midi_message_received, xBLEMidiEventGroup);
   if( status < 0 ) {
     ESP_LOGE(TAG, "BLE MIDI Driver returned status=%d", status);
   } else {

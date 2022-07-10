@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-
+#include "freertos/event_groups.h"
 
 #ifndef BLEMIDI_DEVICE_NAME
 #define BLEMIDI_DEVICE_NAME "MIDIbox"
@@ -60,6 +60,10 @@ extern "C" {
 #define BLEMIDI_ENABLE_CONSOLE 1
 #endif
   
+// Event Group Bits
+
+#define BLE_CONNECT BIT0
+
 /**
  * @brief Initializes the BLEMIDI Server
  *
@@ -67,7 +71,7 @@ extern "C" {
  *         API see blemidi_receive_packet_callback_for_debugging
  *         Specify NULL if no callback required in your application.
  */  
-extern int32_t blemidi_init(void *callback_midi_message_received);
+extern int32_t blemidi_init(void *callback_midi_message_received, EventGroupHandle_t xEventGroup);
 
 /**
  * @brief Sends a BLE MIDI message

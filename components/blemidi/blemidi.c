@@ -83,6 +83,10 @@ static uint16_t blemidi_outbuffer_timestamp_last_flush = 0;
 // to handled continued SysEx
 static size_t   blemidi_continued_sysex_pos[BLEMIDI_NUM_PORTS];
 
+// define the event group
+EventGroupHandle_t xCreatedEventGroup;
+
+
 /* Attributes State Machine */
 enum
 {
@@ -607,6 +611,8 @@ static void blemidi_exec_write_event_env(prepare_type_env_t *prepare_write_env, 
 
 static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
+    ESP_LOGI("Gatts_profile_eventHandler","Handlingg");
+    ESP_LOGI("Gatts_profile_eventHandler","Event Number: %d",event);
     switch (event) {
         case ESP_GATTS_REG_EVT:{
             esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(BLEMIDI_DEVICE_NAME);
@@ -678,6 +684,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
             ESP_LOGI(BLEMIDI_TAG, "SERVICE_START_EVT, status %d, service_handle %d", param->start.status, param->start.service_handle);
             break;
         case ESP_GATTS_CONNECT_EVT:
+            xEventGroupSetBits(xCreatedEventGroup,BLE_CONNECT);
             ESP_LOGI(BLEMIDI_TAG, "ESP_GATTS_CONNECT_EVT, conn_id = %d", param->connect.conn_id);
             esp_log_buffer_hex(BLEMIDI_TAG, param->connect.remote_bda, 6);
             esp_ble_conn_update_params_t conn_params = {0};
@@ -691,6 +698,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
             esp_ble_gap_update_conn_params(&conn_params);
             break;
         case ESP_GATTS_DISCONNECT_EVT:
+            xEventGroupClearBits(xCreatedEventGroup,BLE_CONNECT);
             ESP_LOGI(BLEMIDI_TAG, "ESP_GATTS_DISCONNECT_EVT, reason = 0x%x", param->disconnect.reason);
             esp_ble_gap_start_advertising(&adv_params);
             break;
@@ -744,6 +752,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             /* ESP_GATT_IF_NONE, not specify a certain gatt_if, need to call every profile cb function */
             if (gatts_if == ESP_GATT_IF_NONE || gatts_if == midi_profile_tab[idx].gatts_if) {
                 if (midi_profile_tab[idx].gatts_cb) {
+                    ESP_LOGI("gatts_event_handler","this should pass arguments to profile handler");
                     midi_profile_tab[idx].gatts_cb(event, gatts_if, param);
                 }
             }
@@ -755,9 +764,12 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Initializes the BLE MIDI Server
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-int32_t blemidi_init(void *_callback_midi_message_received)
+int32_t blemidi_init(void *_callback_midi_message_received, EventGroupHandle_t xEventGroup)
 {
   esp_err_t ret;
+
+  // assign Event group
+  xCreatedEventGroup = xEventGroup;
 
   // callback will be installed if driver was booted successfully
   blemidi_callback_midi_message_received = NULL;
