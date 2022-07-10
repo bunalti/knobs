@@ -89,41 +89,24 @@ static TaskHandle_t xADCReadHandle = NULL;
 //--------------------------------------------------------------------+
 static void vBLEMidiWriteTask(void *pvParameters)
 {
-  portTickType xLastExecutionTime;
-  unsigned ctr = 0;
-
-
-  // Initialise the xLastExecutionTime variable on task entry
-  xLastExecutionTime = xTaskGetTickCount();
 
   while( 1 ) {
-    ESP_LOGI("BLE Midi Write Task","EventBits: %d",xEventGroupGetBits(xBLEMidiEventGroup));
+    if(xEventGroupGetBits(xBLEMidiEventGroup) == 0){
+      esp_task_wdt_delete(NULL);
+      xEventGroupWaitBits(xBLEMidiEventGroup,BLE_CONNECT,pdFALSE,pdFALSE,portMAX_DELAY);
+      esp_task_wdt_add(NULL);
+    }
     ESP_ERROR_CHECK(esp_task_wdt_reset());
-    vTaskDelayUntil(&xLastExecutionTime, 500 / portTICK_RATE_MS);
-
-    blemidi_tick(); // for timestamp and output buffer handling
-
-#if 1
-    ctr += 1;
-   // ESP_LOGI(TAG, "Sending MIDI Note #%d", ctr);
-
-
-    {
-      // TODO: more comfortable packet creation via special APIs
-      uint8_t message[3] = { 0x90, 0x3c, 0x7f };
-      blemidi_send_message(0, message, sizeof(message));
-    }
     
-    vTaskDelayUntil(&xLastExecutionTime, 500 / portTICK_RATE_MS);
 
     blemidi_tick(); // for timestamp and output buffer handling
+    // TODO: more comfortable packet creation via special APIs
+    uint8_t message[3] = { 0x90, 0x3c, 0x7f };
+    blemidi_send_message(0, message, sizeof(message));
 
-    {
-      // TODO: more comfortable packet creation via special APIs
-      uint8_t message[3] = { 0x90, 0x3c, 0x00 };
-      blemidi_send_message(0, message, sizeof(message));
-    }
-#endif
+
+    vTaskDelay(1);
+
   }
 
   vTaskDelete(NULL);
@@ -159,8 +142,6 @@ static void vUSBMidiReadTask(void *arg)
 
 static void vUSBMidiWriteTask(void *arg)
 {
-
- 
 
     static uint8_t const cable_num = 0; // MIDI jack associated with USB endpoint
     static uint8_t const channel = 0; // 0 for channel 1
@@ -242,10 +223,10 @@ void tud_umount_cb(void)
 {
   ESP_LOGI(TAG,"USB is unmounted");
 
-  if(!(0b10000000 && xEventGroupGetBits(xUSBMidiEventGroup))){
+  if(!(0b00000001 && xEventGroupGetBits(xUSBMidiEventGroup))){
     vTaskSuspend(xUSBMidiReadHandle);
     vTaskSuspend(xUSBMidiWriteHandle);
-
+    
     // Unsubscribe tasks to TWDT, then check if it is unsubscribed
     ESP_ERROR_CHECK(esp_task_wdt_delete(xUSBMidiReadHandle));
     ESP_ERROR_CHECK(esp_task_wdt_delete(xUSBMidiWriteHandle));
@@ -259,7 +240,7 @@ void tud_suspend_cb(bool remote_wakeup_en)
   ESP_LOGI(TAG,"USB is suspended");
 
 
-  if(!(0b10000000 && xEventGroupGetBits(xUSBMidiEventGroup))){
+  if(!(0b00000001 && xEventGroupGetBits(xUSBMidiEventGroup))){
     vTaskSuspend(xUSBMidiReadHandle);
     vTaskSuspend(xUSBMidiWriteHandle);
 

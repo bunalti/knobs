@@ -611,8 +611,8 @@ static void blemidi_exec_write_event_env(prepare_type_env_t *prepare_write_env, 
 
 static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
-    ESP_LOGI("Gatts_profile_eventHandler","Handlingg");
-    ESP_LOGI("Gatts_profile_eventHandler","Event Number: %d",event);
+    // ESP_LOGI("Gatts_profile_eventHandler","Handlingg");
+    // ESP_LOGI("Gatts_profile_eventHandler","Event Number: %d",event);
     switch (event) {
         case ESP_GATTS_REG_EVT:{
             esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(BLEMIDI_DEVICE_NAME);
@@ -752,7 +752,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             /* ESP_GATT_IF_NONE, not specify a certain gatt_if, need to call every profile cb function */
             if (gatts_if == ESP_GATT_IF_NONE || gatts_if == midi_profile_tab[idx].gatts_if) {
                 if (midi_profile_tab[idx].gatts_cb) {
-                    ESP_LOGI("gatts_event_handler","this should pass arguments to profile handler");
+                    // ESP_LOGI("gatts_event_handler","this should pass arguments to profile handler");
                     midi_profile_tab[idx].gatts_cb(event, gatts_if, param);
                 }
             }
