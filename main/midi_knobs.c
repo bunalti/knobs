@@ -61,9 +61,32 @@
 #define ADC_OUTPUT_TYPE     ADC_DIGI_OUTPUT_FORMAT_TYPE2
 
 
-static uint16_t adc1_chan_mask = BIT(2) | BIT(3);
-static uint16_t adc2_chan_mask = BIT(0);
-static adc_channel_t channel[3] = {ADC1_CHANNEL_2, ADC1_CHANNEL_3, (ADC2_CHANNEL_0 | 1 << 3)};
+static uint16_t adc1_chan_mask = BIT(0) | BIT(1) | BIT(2) | BIT(3) 
+                               | BIT(4) | BIT(5) | BIT(6) | BIT(7);
+                               
+static uint16_t adc2_chan_mask = BIT(0) | BIT(1) | BIT(2) | BIT(3) 
+                               | BIT(4) | BIT(5) | BIT(6) | BIT(7);
+
+static adc_channel_t channel[16] = {ADC1_CHANNEL_0, ADC1_CHANNEL_1, ADC1_CHANNEL_2, ADC1_CHANNEL_3,
+                                    ADC1_CHANNEL_4, ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7,
+                                   (ADC2_CHANNEL_0 | 1 << 3), (ADC2_CHANNEL_1 | 1 << 3), (ADC2_CHANNEL_2 | 1 << 3), (ADC2_CHANNEL_3 | 1 << 3),
+                                   (ADC2_CHANNEL_4 | 1 << 3), (ADC2_CHANNEL_5 | 1 << 3), (ADC2_CHANNEL_6 | 1 << 3), (ADC2_CHANNEL_7 | 1 << 3)
+                                   };
+
+
+typedef enum
+{
+  knob1, knob2, knob3, knob4,
+  knob5, knob6, knob7, knob8,
+  knob9, knob10, knob11, knob12,
+  knob13, knob14, knob15, knob16
+}KnobNumber_t;
+
+typedef struct 
+{
+  KnobNumber_t sKnobNumber;
+  uint32_t xValue;
+}Knobs_t;
 
 
 //--------------------------------------------------------------------+
@@ -83,6 +106,12 @@ static TaskHandle_t xUSBMidiWriteHandle = NULL;
 static TaskHandle_t xBLEMidiWriteHandle = NULL;
 static TaskHandle_t xADCReadHandle = NULL;
 
+
+//--------------------------------------------------------------------+
+// Queue Handlers
+//--------------------------------------------------------------------+
+
+static QueueHandle_t xADCQueueHandle;
 
 //--------------------------------------------------------------------+
 // This task is periodically called to send MIDI over BLE
@@ -298,7 +327,7 @@ static void continuous_adc_init(uint16_t adc1_chan_mask, uint16_t adc2_chan_mask
     for (int i = 0; i < channel_num; i++) {
         uint8_t unit = GET_UNIT(channel[i]);
         uint8_t ch = channel[i] & 0x7;
-        adc_pattern[i].atten = ADC_ATTEN_DB_0;
+        adc_pattern[i].atten = ADC_ATTEN_DB_11;
         adc_pattern[i].channel = ch;
         adc_pattern[i].unit = unit;
         adc_pattern[i].bit_width = SOC_ADC_DIGI_MAX_BITWIDTH;
@@ -329,12 +358,16 @@ static void vADCReadTask(void *pvParameters)
     uint8_t result[TIMES] = {0};
     memset(result, 0xcc, TIMES);
 
- 
+    // Queue status
+    BaseType_t qStatus;
 
     continuous_adc_init(adc1_chan_mask, adc2_chan_mask, channel, sizeof(channel) / sizeof(adc_channel_t));
     adc_digi_start();
 
+    // Data Structure
+    Knobs_t xStructToSend[16];
 
+    
 
     while(1) {
         ret = adc_digi_read_bytes(result, TIMES, &ret_num, ADC_MAX_DELAY);
@@ -360,25 +393,16 @@ static void vADCReadTask(void *pvParameters)
             //ESP_LOGI("ADC DMA", "ret is %x, ret_num is %d", ret, ret_num);
             for (int i = 0; i < ret_num; i += ADC_RESULT_BYTE) {
                 adc_digi_output_data_t *p = (void*)&result[i];
-    #if CONFIG_IDF_TARGET_ESP32
-                //ESP_LOGI("ADC DMA", "Unit: %d, Channel: %d, Value: %x", 1, p->type1.channel, p->type1.data);
-    #else
                 if (ADC_CONV_MODE == ADC_CONV_BOTH_UNIT || ADC_CONV_MODE == ADC_CONV_ALTER_UNIT) {
                     if (check_valid_data(p)) {
-                        //ESP_LOGI("ADC DMA", "Unit: %d,_Channel: %d, Value: %x", p->type2.unit+1, p->type2.channel, p->type2.data);
+                        ESP_LOGI("ADC DMA", "Unit: %d,_Channel: %d, Value: %x", p->type2.unit+1, p->type2.channel, p->type2.data);
+                        //qStatus = xQueueSend(xADCQueueHandle,);
+
                     } else {
                         // abort();
-                        //ESP_LOGI("ADC DMA", "Invalid data [%d_%d_%x]", p->type2.unit+1, p->type2.channel, p->type2.data);
+                        ESP_LOGI("ADC DMA", "Invalid data [%d_%d_%x]", p->type2.unit+1, p->type2.channel, p->type2.data);
                     }
                 }
-    #if CONFIG_IDF_TARGET_ESP32S2
-                else if (ADC_CONV_MODE == ADC_CONV_SINGLE_UNIT_2) {
-                    //ESP_LOGI("ADC DMA", "Unit: %d, Channel: %d, Value: %x", 2, p->type1.channel, p->type1.data);
-                } else if (ADC_CONV_MODE == ADC_CONV_SINGLE_UNIT_1) {
-                    //ESP_LOGI("ADC DMA", "Unit: %d, Channel: %d, Value: %x", 1, p->type1.channel, p->type1.data);
-                }
-    #endif  //#if CONFIG_IDF_TARGET_ESP32S2
-    #endif
             }
             //See `note 1`
             ESP_ERROR_CHECK(esp_task_wdt_reset());
@@ -389,7 +413,7 @@ static void vADCReadTask(void *pvParameters)
              * Here we set Timeout ``portMAX_DELAY``, so you'll never reach this branch.
              */
             ESP_LOGW("ADC DMA", "No data, increase timeout or reduce conv_num_each_intr");
-            vTaskDelay(1000);
+            vTaskDelay(1);
         }
 
     }
@@ -450,6 +474,7 @@ void app_main()
   
   // Read ADC channels
   ESP_LOGI(TAG, "ADC reading task init");
+  xADCQueueHandle = xQueueCreate(16,sizeof(Knobs_t));
   xTaskCreatePinnedToCore(vADCReadTask, "ADC Read", 4096, NULL, 1, &xADCReadHandle,1);
   esp_task_wdt_add(xADCReadHandle);
 
