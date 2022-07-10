@@ -1,3 +1,3 @@
-idf_component_register(SRCS "adc_dma_read.c" "midi_knobs.c"
+idf_component_register(SRCS "midi_knobs.c"
                     INCLUDE_DIRS ".")
 

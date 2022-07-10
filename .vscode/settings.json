@@ -4,20 +4,10 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
-  "files.associations": {
-    "*.inc": "c",
-    "tusb_config.h": "c",
-    "blemidi.h": "c",
-    "freertos.h": "c",
-    "esp_log.h": "c",
-    "sdkconfig.h": "c",
-    "tinyusb.h": "c",
-    "tinyusb_types.h": "c",
-    "tusb_option.h": "c",
-    "usb_descriptors.h": "c",
-    "tusb.h": "c",
-    "event_groups.h": "c"
-  },
+  "idf.portWin": "COM4",
   "idf.flashType": "UART",
-  "idf.portWin": "COM4"
+  "files.associations": {
+    "esp_task_wdt.h": "c",
+    "esp_timer.h": "c"
+  }
 }
