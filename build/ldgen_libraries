@@ -29,6 +29,7 @@ C:/Users/kerem/knobs/build/esp-idf/cmock/libcmock.a
 C:/Users/kerem/knobs/build/esp-idf/vfs/libvfs.a
 C:/Users/kerem/knobs/build/esp-idf/console/libconsole.a
 C:/Users/kerem/knobs/build/esp-idf/esp_netif/libesp_netif.a
+C:/Users/kerem/knobs/build/esp-idf/esp_eth/libesp_eth.a
 C:/Users/kerem/knobs/build/esp-idf/esp_event/libesp_event.a
 C:/Users/kerem/knobs/build/esp-idf/wpa_supplicant/libwpa_supplicant.a
 C:/Users/kerem/knobs/build/esp-idf/esp_wifi/libesp_wifi.a
@@ -36,7 +37,6 @@ C:/Users/kerem/knobs/build/esp-idf/lwip/liblwip.a
 C:/Users/kerem/knobs/build/esp-idf/http_parser/libhttp_parser.a
 C:/Users/kerem/knobs/build/esp-idf/esp-tls/libesp-tls.a
 C:/Users/kerem/knobs/build/esp-idf/esp_adc_cal/libesp_adc_cal.a
-C:/Users/kerem/knobs/build/esp-idf/esp_eth/libesp_eth.a
 C:/Users/kerem/knobs/build/esp-idf/esp_gdbstub/libesp_gdbstub.a
 C:/Users/kerem/knobs/build/esp-idf/esp_hid/libesp_hid.a
 C:/Users/kerem/knobs/build/esp-idf/tcp_transport/libtcp_transport.a
@@ -56,8 +56,6 @@ C:/Users/kerem/knobs/build/esp-idf/json/libjson.a
 C:/Users/kerem/knobs/build/esp-idf/mqtt/libmqtt.a
 C:/Users/kerem/knobs/build/esp-idf/perfmon/libperfmon.a
 C:/Users/kerem/knobs/build/esp-idf/spiffs/libspiffs.a
-C:/Users/kerem/knobs/build/esp-idf/usb/libusb.a
-C:/Users/kerem/knobs/build/esp-idf/tinyusb/libtinyusb.a
 C:/Users/kerem/knobs/build/esp-idf/ulp/libulp.a
 C:/Users/kerem/knobs/build/esp-idf/wifi_provisioning/libwifi_provisioning.a
 C:/Users/kerem/knobs/build/esp-idf/main/libmain.a

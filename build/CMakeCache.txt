@@ -14,19 +14,25 @@
 # EXTERNAL cache entries
 ########################
 
-//Path to a program.
-CMAKE_ADDR2LINE:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-addr2line.exe
+//No help, variable specified on the command line.
+CCACHE_ENABLE:UNINITIALIZED=1
 
 //Path to a program.
-CMAKE_AR:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ar.exe
+CCACHE_FOUND:FILEPATH=C:/Users/kerem/.espressif/tools/ccache/4.3/ccache-4.3-windows-64/ccache.exe
+
+//Path to a program.
+CMAKE_ADDR2LINE:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-addr2line.exe
+
+//Path to a program.
+CMAKE_AR:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-ar.exe
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_ASM_COMPILER_AR:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc-ar.exe
+CMAKE_ASM_COMPILER_AR:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc-ar.exe
 
 //A wrapper around 'ranlib' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_ASM_COMPILER_RANLIB:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc-ranlib.exe
+CMAKE_ASM_COMPILER_RANLIB:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc-ranlib.exe
 
 //ASM Compiler Base Flags
 CMAKE_ASM_FLAGS:STRING='-mlongcalls '
@@ -49,14 +55,14 @@ CMAKE_BUILD_TYPE:STRING=
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_CXX_COMPILER_AR:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc-ar.exe
+CMAKE_CXX_COMPILER_AR:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc-ar.exe
 
 //A wrapper around 'ranlib' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_CXX_COMPILER_RANLIB:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc-ranlib.exe
+CMAKE_CXX_COMPILER_RANLIB:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc-ranlib.exe
 
 //C++ Compiler Base Flags
-CMAKE_CXX_FLAGS:STRING='-mlongcalls '
+CMAKE_CXX_FLAGS:STRING='-mlongcalls -Wno-frame-address '
 
 //Flags used by the CXX compiler during DEBUG builds.
 CMAKE_CXX_FLAGS_DEBUG:STRING=-g
@@ -72,14 +78,14 @@ CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_C_COMPILER_AR:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc-ar.exe
+CMAKE_C_COMPILER_AR:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc-ar.exe
 
 //A wrapper around 'ranlib' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_C_COMPILER_RANLIB:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-gcc-ranlib.exe
+CMAKE_C_COMPILER_RANLIB:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc-ranlib.exe
 
 //C Compiler Base Flags
-CMAKE_C_FLAGS:STRING='-mlongcalls '
+CMAKE_C_FLAGS:STRING='-mlongcalls -Wno-frame-address '
 
 //Flags used by the C compiler during DEBUG builds.
 CMAKE_C_FLAGS_DEBUG:STRING=-g
@@ -118,7 +124,7 @@ CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=
 CMAKE_INSTALL_PREFIX:PATH=C:/Program Files (x86)/knobs
 
 //Path to a program.
-CMAKE_LINKER:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ld.exe
+CMAKE_LINKER:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-ld.exe
 
 //Program used to build from build.ninja files.
 CMAKE_MAKE_PROGRAM:FILEPATH=C:/Users/kerem/.espressif/tools/ninja/1.10.2/ninja.exe
@@ -144,13 +150,13 @@ CMAKE_MODULE_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_NM:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-nm.exe
+CMAKE_NM:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-nm.exe
 
 //Path to a program.
-CMAKE_OBJCOPY:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-objcopy.exe
+CMAKE_OBJCOPY:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-objcopy.exe
 
 //Path to a program.
-CMAKE_OBJDUMP:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-objdump.exe
+CMAKE_OBJDUMP:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-objdump.exe
 
 //Value Computed by CMake
 CMAKE_PROJECT_DESCRIPTION:STATIC=
@@ -162,10 +168,10 @@ CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 CMAKE_PROJECT_NAME:STATIC=knobs
 
 //Path to a program.
-CMAKE_RANLIB:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-ranlib.exe
+CMAKE_RANLIB:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-ranlib.exe
 
 //Path to a program.
-CMAKE_READELF:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-readelf.exe
+CMAKE_READELF:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-readelf.exe
 
 //Flags used by the linker during the creation of shared libraries
 // during all build types.
@@ -215,10 +221,10 @@ CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_STRIP:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32s3-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32s3-elf/bin/xtensa-esp32s3-elf-strip.exe
+CMAKE_STRIP:FILEPATH=C:/Users/kerem/.espressif/tools/xtensa-esp32-elf/esp-2022r1-RC1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-strip.exe
 
 //The CMake toolchain file
-CMAKE_TOOLCHAIN_FILE:FILEPATH=C:/Users/kerem/esp/esp-idf/tools/cmake/toolchain-esp32s3.cmake
+CMAKE_TOOLCHAIN_FILE:FILEPATH=C:/Users/kerem/esp/esp-idf/tools/cmake/toolchain-esp32.cmake
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -245,7 +251,7 @@ GEN_FILES:BOOL=
 GIT_EXECUTABLE:FILEPATH=C:/Users/kerem/.espressif/tools/idf-git/2.30.1/cmd/git.exe
 
 //IDF Build Target
-IDF_TARGET:STRING=esp32s3
+IDF_TARGET:STRING=esp32
 
 //IDF Build Toolchain Type
 IDF_TOOLCHAIN:STRING=gcc
