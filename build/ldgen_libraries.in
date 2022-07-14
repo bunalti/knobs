@@ -29,7 +29,6 @@ $<TARGET_FILE:__idf_cmock>
 $<TARGET_FILE:__idf_vfs>
 $<TARGET_FILE:__idf_console>
 $<TARGET_FILE:__idf_esp_netif>
-$<TARGET_FILE:__idf_esp_eth>
 $<TARGET_FILE:__idf_esp_event>
 $<TARGET_FILE:__idf_wpa_supplicant>
 $<TARGET_FILE:__idf_esp_wifi>
@@ -37,6 +36,7 @@ $<TARGET_FILE:__idf_lwip>
 $<TARGET_FILE:__idf_http_parser>
 $<TARGET_FILE:__idf_esp-tls>
 $<TARGET_FILE:__idf_esp_adc_cal>
+$<TARGET_FILE:__idf_esp_eth>
 $<TARGET_FILE:__idf_esp_gdbstub>
 $<TARGET_FILE:__idf_esp_hid>
 $<TARGET_FILE:__idf_tcp_transport>
@@ -56,6 +56,8 @@ $<TARGET_FILE:__idf_json>
 $<TARGET_FILE:__idf_mqtt>
 $<TARGET_FILE:__idf_perfmon>
 $<TARGET_FILE:__idf_spiffs>
+$<TARGET_FILE:__idf_usb>
+$<TARGET_FILE:__idf_tinyusb>
 $<TARGET_FILE:__idf_ulp>
 $<TARGET_FILE:__idf_wifi_provisioning>
 $<TARGET_FILE:__idf_main>

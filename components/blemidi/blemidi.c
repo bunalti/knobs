@@ -52,10 +52,12 @@
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
 
-#define PROFILE_NUM                 1
-#define PROFILE_APP_IDX             0
-#define ESP_APP_ID                  0x55
-#define SVC_INST_ID                 0
+#define PROFILE_NUM                   1
+#define PROFILE_MIDI_APP_IDX          0
+
+#define MIDI_APP_ID                   0x55
+
+#define SVC_INST_ID                   0
 
 /* The max length of characteristic value. When the GATT client performs a write or prepare write operation,
 *  the data length must be less than GATTS_MIDI_CHAR_VAL_LEN_MAX. 
@@ -94,7 +96,10 @@ enum
     IDX_CHAR_A,
     IDX_CHAR_VAL_A,
     IDX_CHAR_CFG_A,
-    
+
+    IDX_CHAR_B,
+    IDX_CHAR_VAL_B,
+
     HRS_IDX_NB,
 };
 uint16_t midi_handle_table[HRS_IDX_NB];
@@ -106,6 +111,10 @@ typedef struct {
 
 static prepare_type_env_t prepare_write_env;
 
+//--------------------------------------------------------------------+
+//                              UUIDS
+//--------------------------------------------------------------------+
+
 static uint8_t midi_service_uuid[16] = {
     /* LSB <--------------------------------------------------------------------------------> MSB */
     0x00, 0xC7, 0xC4, 0x4E, 0xE3, 0x6C, 0x51, 0xA7, 0x33, 0x4B, 0xE8, 0xED, 0x5A, 0x0E, 0xB8, 0x03
@@ -116,6 +125,18 @@ static const uint8_t midi_characteristics_uuid[16] = {
     0xF3, 0x6B, 0x10, 0x9D, 0x66, 0xF2, 0xA9, 0xA1, 0x12, 0x41, 0x68, 0x38, 0xDB, 0xE5, 0x72, 0x77
 };
 
+
+static const uint8_t settings_characteristics_uuid[16] = {
+    /* LSB <--------------------------------------------------------------------------------> MSB */
+    0xBC, 0x8A, 0xBF, 0x45, 0xCA, 0x05, 0x50, 0xBA, 0x40, 0x42, 0xB0, 0x00, 0xC9, 0xAD, 0x65, 0xF3
+};
+
+
+
+
+//--------------------------------------------------------------------+
+//                 ADVERTISEMENT DATA AND PARAMETERS
+//--------------------------------------------------------------------+
 
 /* The length of adv data must be less than 31 bytes */
 static esp_ble_adv_data_t adv_data = {
@@ -161,6 +182,12 @@ static esp_ble_adv_params_t adv_params = {
     .adv_filter_policy   = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY,
 };
 
+
+
+//--------------------------------------------------------------------+
+//              GATTS PROFILES AND THEIR EVENT HANDLERS
+//--------------------------------------------------------------------+
+
 struct gatts_profile_inst {
     esp_gatts_cb_t gatts_cb;
     uint16_t gatts_if;
@@ -176,19 +203,27 @@ struct gatts_profile_inst {
     esp_bt_uuid_t descr_uuid;
 };
 
-static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
+static void gatts_midi_profile_event_handler(esp_gatts_cb_event_t event,
                                         esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
+
 /* One gatt-based profile one app_id and one gatts_if, this array will store the gatts_if returned by ESP_GATTS_REG_EVT */
-static struct gatts_profile_inst midi_profile_tab[PROFILE_NUM] = {
-    [PROFILE_APP_IDX] = {
-        .gatts_cb = gatts_profile_event_handler,
+static struct gatts_profile_inst ble_profile_tab[PROFILE_NUM] = {
+    [PROFILE_MIDI_APP_IDX] = {
+        .gatts_cb = gatts_midi_profile_event_handler,
         .gatts_if = ESP_GATT_IF_NONE,       /* Not get the gatt_if, so initial is ESP_GATT_IF_NONE */
     },
+
 };
+
+
+
+
+
 
 /* Service */
 static const uint16_t primary_service_uuid         = ESP_GATT_UUID_PRI_SERVICE;
+//static const uint16_t secondary_service_uuid       = ESP_GATT_UUID_SEC_SERVICE;
 static const uint16_t character_declaration_uuid   = ESP_GATT_UUID_CHAR_DECLARE;
 static const uint16_t character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
 //static const uint8_t char_prop_read                = ESP_GATT_CHAR_PROP_BIT_READ;
@@ -196,7 +231,8 @@ static const uint16_t character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_C
 //static const uint8_t char_prop_read_write_notify   = ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_NOTIFY;
 static const uint8_t char_prop_read_write_writenr_notify = ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_NOTIFY | ESP_GATT_CHAR_PROP_BIT_WRITE_NR;
 
-static const uint8_t char_value[3]                 = {0x80, 0x80, 0xfe};
+static const uint8_t midi_char_value[3]                 = {0x80, 0x80, 0xfe};
+static const uint8_t settings_char_value[3]                 = {0x80, 0x80, 0xfe};
 static const uint8_t blemidi_ccc[2]                = {0x00, 0x00};
 
 void (*blemidi_callback_midi_message_received)(uint8_t blemidi_port, uint16_t timestamp, uint8_t midi_status, uint8_t *remaining_message, size_t len, size_t continued_sysex_pos);
@@ -242,7 +278,7 @@ int32_t blemidi_outbuffer_flush(uint8_t blemidi_port)
     return -1; // invalid port
   
   if( blemidi_outbuffer_len[blemidi_port] > 0 ) {
-    esp_ble_gatts_send_indicate(midi_profile_tab[PROFILE_APP_IDX].gatts_if, midi_profile_tab[PROFILE_APP_IDX].conn_id, midi_handle_table[IDX_CHAR_VAL_A], blemidi_outbuffer_len[blemidi_port], blemidi_outbuffer[blemidi_port], false);
+    esp_ble_gatts_send_indicate(ble_profile_tab[PROFILE_MIDI_APP_IDX].gatts_if, ble_profile_tab[PROFILE_MIDI_APP_IDX].conn_id, midi_handle_table[IDX_CHAR_VAL_A], blemidi_outbuffer_len[blemidi_port], blemidi_outbuffer[blemidi_port], false);
     blemidi_outbuffer_len[blemidi_port] = 0;
   }
   return 0; // no error
@@ -279,7 +315,7 @@ static int32_t blemidi_outbuffer_push(uint8_t blemidi_port, uint8_t *stream, siz
           packet_len -= 1;
           memcpy((uint8_t *)packet + 1, stream, len);
         }
-        esp_ble_gatts_send_indicate(midi_profile_tab[PROFILE_APP_IDX].gatts_if, midi_profile_tab[PROFILE_APP_IDX].conn_id, midi_handle_table[IDX_CHAR_VAL_A], packet_len, packet, false);
+        esp_ble_gatts_send_indicate(ble_profile_tab[PROFILE_MIDI_APP_IDX].gatts_if, ble_profile_tab[PROFILE_MIDI_APP_IDX].conn_id, midi_handle_table[IDX_CHAR_VAL_A], packet_len, packet, false);
         free(packet);
       }
     }
@@ -482,7 +518,7 @@ void blemidi_receive_packet_callback_for_debugging(uint8_t blemidi_port, uint16_
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Full Database Description - Used to add attributes into the database */
-static const esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
+static const esp_gatts_attr_db_t gatt_midi_db[HRS_IDX_NB] =
 {
     // Service Declaration
     [IDX_SVC]        =
@@ -497,13 +533,25 @@ static const esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     /* Characteristic Value */
     [IDX_CHAR_VAL_A] =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *)&midi_characteristics_uuid, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
-      GATTS_MIDI_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
+      GATTS_MIDI_CHAR_VAL_LEN_MAX, sizeof(midi_char_value), (uint8_t *)midi_char_value}},
 
     /* Client Characteristic Configuration Descriptor (this is a BLE2902 descriptor) */
     [IDX_CHAR_CFG_A]  =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_client_config_uuid, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
       sizeof(uint16_t), sizeof(blemidi_ccc), (uint8_t *)blemidi_ccc}},
+
+   /* Characteristic Declaration */
+    [IDX_CHAR_B]      =
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
+      CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read_write_writenr_notify}},
+
+    /* Characteristic Value */
+    [IDX_CHAR_VAL_B]  =
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *)&settings_characteristics_uuid, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
+      GATTS_MIDI_CHAR_VAL_LEN_MAX, sizeof(settings_char_value), (uint8_t *)settings_char_value}},
+
 };
+
 
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
@@ -609,13 +657,13 @@ static void blemidi_exec_write_event_env(prepare_type_env_t *prepare_write_env, 
     prepare_write_env->prepare_len = 0;
 }
 
-static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
+static void gatts_midi_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
-    // ESP_LOGI("Gatts_profile_eventHandler","Handlingg");
+    // ESP_LOGI("gatts_midi_profile_event_handler","Handlingg");
     // ESP_LOGI("Gatts_profile_eventHandler","Event Number: %d",event);
     switch (event) {
         case ESP_GATTS_REG_EVT:{
-            esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(BLEMIDI_DEVICE_NAME);
+            esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(BLE_DEVICE_NAME);
             if (set_dev_name_ret){
                 ESP_LOGE(BLEMIDI_TAG, "set device name failed, error code = %x", set_dev_name_ret);
             }
@@ -633,7 +681,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
             }
             adv_config_done |= SCAN_RSP_CONFIG_FLAG;
 
-            esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(gatt_db, gatts_if, HRS_IDX_NB, SVC_INST_ID);
+            esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(gatt_midi_db, gatts_if, HRS_IDX_NB, SVC_INST_ID);
             if (create_attr_ret){
                 ESP_LOGE(BLEMIDI_TAG, "create attr table failed, error code = %x", create_attr_ret);
             }
@@ -734,10 +782,15 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
 
+    ESP_LOGI("gatts_event_handler","gatts_if: %d",gatts_if);
+    ESP_LOGI("gatts_event_handler", "app_id %04x, status %d event_id %d",
+            param->reg.app_id,
+            param->reg.status,
+            event);
     /* If event is register event, store the gatts_if for each profile */
     if (event == ESP_GATTS_REG_EVT) {
         if (param->reg.status == ESP_GATT_OK) {
-            midi_profile_tab[PROFILE_APP_IDX].gatts_if = gatts_if;
+            ble_profile_tab[param->reg.app_id - 0x55].gatts_if = gatts_if;
         } else {
             ESP_LOGE(BLEMIDI_TAG, "reg app failed, app_id %04x, status %d",
                     param->reg.app_id,
@@ -750,10 +803,9 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
         int idx;
         for (idx = 0; idx < PROFILE_NUM; idx++) {
             /* ESP_GATT_IF_NONE, not specify a certain gatt_if, need to call every profile cb function */
-            if (gatts_if == ESP_GATT_IF_NONE || gatts_if == midi_profile_tab[idx].gatts_if) {
-                if (midi_profile_tab[idx].gatts_cb) {
-                    // ESP_LOGI("gatts_event_handler","this should pass arguments to profile handler");
-                    midi_profile_tab[idx].gatts_cb(event, gatts_if, param);
+            if (gatts_if == ESP_GATT_IF_NONE || gatts_if == ble_profile_tab[idx].gatts_if) {
+                if (ble_profile_tab[idx].gatts_cb) {
+                    ble_profile_tab[idx].gatts_cb(event, gatts_if, param);
                 }
             }
         }
@@ -822,9 +874,9 @@ int32_t blemidi_init(void *_callback_midi_message_received, EventGroupHandle_t x
     return -6;
   }
 
-  ret = esp_ble_gatts_app_register(ESP_APP_ID);
+  ret = esp_ble_gatts_app_register(MIDI_APP_ID);
   if (ret){
-    ESP_LOGE(BLEMIDI_TAG, "gatts app register error, error code = %x", ret);
+    ESP_LOGE(BLEMIDI_TAG, "midi app register error, error code = %x", ret);
     return -7;
   }
 
@@ -900,4 +952,3 @@ void blemidi_register_console_commands(void)
 }
 
 #endif
-

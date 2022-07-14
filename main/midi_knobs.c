@@ -39,9 +39,7 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "blemidi.h"
-#if CONFIG_IDF_TARGET_ESP32S3
 #include "tinyusb.h"
-#endif
 #include "driver/adc.h"
 #include "esp_adc_cal.h"
 #include "esp_task_wdt.h"
@@ -58,20 +56,15 @@
 #define TIMES              256
 #define GET_UNIT(x)        ((x>>3) & 0x1)
 
-#if CONFIG_IDF_TARGET_ESP32
-#define ADC_RESULT_BYTE     2
-#define ADC_CONV_LIMIT_EN   1                       //For ESP32, this should always be set to 1
-#define ADC_CONV_MODE       ADC_CONV_SINGLE_UNIT_1  //ESP32 only supports ADC1 DMA mode
-#define ADC_OUTPUT_TYPE     ADC_DIGI_OUTPUT_FORMAT_TYPE1
-#elif CONFIG_IDF_TARGET_ESP32S3
+
 #define ADC_RESULT_BYTE     4
 #define ADC_CONV_LIMIT_EN   0
 #define ADC_CONV_MODE       ADC_CONV_BOTH_UNIT
 #define ADC_OUTPUT_TYPE     ADC_DIGI_OUTPUT_FORMAT_TYPE2
-#endif
 
 
-#if CONFIG_IDF_TARGET_ESP32S3
+
+
 static uint16_t adc1_chan_mask = BIT(0) | BIT(1) | BIT(2) | BIT(3) 
                                | BIT(4) | BIT(5) | BIT(6) | BIT(7);
 
@@ -83,16 +76,6 @@ static adc_channel_t channel[16] = {ADC1_CHANNEL_0, ADC1_CHANNEL_1, ADC1_CHANNEL
                                    (ADC2_CHANNEL_0 | 1 << 3), (ADC2_CHANNEL_1 | 1 << 3), (ADC2_CHANNEL_2 | 1 << 3), (ADC2_CHANNEL_3 | 1 << 3),
                                    (ADC2_CHANNEL_4 | 1 << 3), (ADC2_CHANNEL_5 | 1 << 3), (ADC2_CHANNEL_6 | 1 << 3), (ADC2_CHANNEL_7 | 1 << 3)
                                    };
-#endif
-
-#if CONFIG_IDF_TARGET_ESP32
-static uint16_t adc1_chan_mask = BIT(0) | BIT(1) | BIT(2) | BIT(3) 
-                               | BIT(4) | BIT(5) | BIT(6) | BIT(7);
-static uint16_t adc2_chan_mask = 0;
-static adc_channel_t channel[8] = {ADC1_CHANNEL_0, ADC1_CHANNEL_1, ADC1_CHANNEL_2, ADC1_CHANNEL_3,
-                                    ADC1_CHANNEL_4, ADC1_CHANNEL_5, ADC1_CHANNEL_6, ADC1_CHANNEL_7
-                                    };
-#endif
 
 
 
@@ -108,10 +91,8 @@ typedef struct
 // Event Groups
 //--------------------------------------------------------------------+
 
-#if CONFIG_IDF_TARGET_ESP32S3
 static const int USB_SUSPEND = BIT0;
-static EventGroupHandle_t  xUSBMidiEvecntGroup;
-#endif
+static EventGroupHandle_t  xUSBMidiEventGroup;
 static EventGroupHandle_t  xBLEMidiEventGroup;
 
 //--------------------------------------------------------------------+
@@ -178,7 +159,6 @@ static void vBLEMidiWriteTask(void *pvParameters)
 // MIDI over USB Tasks
 //--------------------------------------------------------------------+
 
-#if CONFIG_IDF_TARGET_ESP32S3
 
 static void vUSBMidiReadTask(void *arg)
 {
@@ -190,7 +170,7 @@ static void vUSBMidiReadTask(void *arg)
 
 
     for (;;) {
-        vTaskDelay(1);
+        vTaskDelay(pdMS_TO_TICKS(1)/10);
         while (tud_midi_available()) {
             read = tud_midi_packet_read(packet);
             if (read) {
@@ -230,14 +210,13 @@ static void vUSBMidiWriteTask(void *arg)
         
 
       esp_task_wdt_reset();
-      vTaskDelay(pdMS_TO_TICKS(1));
+      vTaskDelay(pdMS_TO_TICKS(1)/10);
     }
 
 
 
 }
 
-#endif
 
 //--------------------------------------------------------------------+
 // Callbacks
@@ -276,7 +255,7 @@ void callback_midi_message_received(uint8_t blemidi_port, uint16_t timestamp, ui
   }
 }
 
-#if CONFIG_IDF_TARGET_ESP32S3
+
 // Invoked when device is mounted
 void tud_mount_cb(void)
 {
@@ -354,7 +333,7 @@ void tud_resume_cb(void)
   
 }
 
-#endif
+
 
 static void continuous_adc_init(uint16_t adc1_chan_mask, uint16_t adc2_chan_mask, adc_channel_t *channel, uint8_t channel_num)
 {
@@ -446,24 +425,6 @@ static void vADCReadTask(void *pvParameters)
             //ESP_LOGI("ADC DMA", "ret is %x, ret_num is %d", ret, ret_num);
             for (int i = 0; i < ret_num; i += ADC_RESULT_BYTE) {
                 adc_digi_output_data_t *p = (void*)&result[i];
-#if CONFIG_IDF_TARGET_ESP32
-                //ESP_LOGI(TAG, "Unit: %d, Channel: %d, Value: %x", 1, p->type1.channel, p->type1.data);          
-                xStructToSend.sKnobNumber = p->type1.channel;
-                xStructToSend.xValue = p->type1.data;
-                //Send to tasks via cue
-                qStatus_USB = xQueueSend(xADC_USBQueueHandle,(void *)&xStructToSend, 0);
-                qStatus_BLE = xQueueSend(xADC_BLEQueueHandle,(void *)&xStructToSend, 0);
-                if(qStatus_USB != pdPASS){
-                  // Introduces Data loss
-                  xQueueReset(xADC_USBQueueHandle);
-                }
-                else;
-                if(qStatus_BLE != pdPASS){
-                  xQueueReset(xADC_BLEQueueHandle);
-
-                }
-                else;
-#else
                 if (ADC_CONV_MODE == ADC_CONV_BOTH_UNIT || ADC_CONV_MODE == ADC_CONV_ALTER_UNIT) {
                     if (check_valid_data(p)) {
                         //ESP_LOGI("ADC DMA", "Unit: %d,_Channel: %d, Value: %x", p->type2.unit+1, p->type2.channel, p->type2.data);
@@ -488,7 +449,6 @@ static void vADCReadTask(void *pvParameters)
                         ESP_LOGI("ADC DMA", "Invalid data [%d_%d_%x]", p->type2.unit+1, p->type2.channel, p->type2.data);
                     }
                 }
-#endif
             }
             //See `note 1`
             ESP_ERROR_CHECK(esp_task_wdt_reset());
@@ -519,7 +479,6 @@ static void vADCReadTask(void *pvParameters)
 void app_main()
 {
   
-  
 
   // install BLE MIDI service
   xBLEMidiEventGroup = xEventGroupCreate();
@@ -531,13 +490,11 @@ void app_main()
     ESP_LOGI(TAG, "BLE MIDI Driver initialized successfully");
     // Write BLE MIDI packets
     ESP_LOGI(TAG, "BLE MIDI write task init");
-    xTaskCreatePinnedToCore(vBLEMidiWriteTask, "BLE Midi Write", 4096, NULL, 19, &xBLEMidiWriteHandle,0);
-    esp_task_wdt_add(xBLEMidiWriteHandle);
+    xTaskCreatePinnedToCore(vBLEMidiWriteTask, "BLE Midi Write", 4096, NULL, 1, &xBLEMidiWriteHandle,0);
+    //esp_task_wdt_add(xBLEMidiWriteHandle);
   }
   
 
-
-#if CONFIG_IDF_TARGET_ESP32S3
   // install USB MIDI service  
   ESP_LOGI(TAG, "USB initialization");
   tinyusb_config_t const tusb_cfg = {
@@ -558,13 +515,13 @@ void app_main()
   vTaskSuspend(xUSBMidiReadHandle);
   vTaskSuspend(xUSBMidiWriteHandle);
   xEventGroupSetBits(xUSBMidiEventGroup, USB_SUSPEND);
-#endif
+
   
   // Read ADC channels
   ESP_LOGI(TAG, "ADC reading task init");
   xADC_BLEQueueHandle = xQueueCreate(16,sizeof(Knobs_t));
   xADC_USBQueueHandle = xQueueCreate(16,sizeof(Knobs_t));
-  xTaskCreatePinnedToCore(vADCReadTask, "ADC Read", 4096, NULL, 15, &xADCReadHandle,1);
+  xTaskCreatePinnedToCore(vADCReadTask, "ADC Read", 4096, NULL, 1, &xADCReadHandle,1);
   esp_task_wdt_add(xADCReadHandle);
 
 

@@ -41,11 +41,19 @@ extern "C" {
 #include "freertos/event_groups.h"
 
 #ifndef BLEMIDI_DEVICE_NAME
-#define BLEMIDI_DEVICE_NAME "MIDIbox"
+#define BLE_DEVICE_NAME "Knobs"
 #endif  
 
 #ifndef BLEMIDI_TAG
 #define BLEMIDI_TAG "BLEMIDI"
+#endif  
+
+#ifndef BLESETTINGS_TAG
+#define BLESETTINGS_TAG "BLESettings"
+#endif  
+
+#ifndef BLECFG_TAG
+#define BLECFG_TAG "BLEConfig"
 #endif  
 
 #ifndef BLEMIDI_NUM_PORTS
@@ -61,8 +69,8 @@ extern "C" {
 #endif
   
 // Event Group Bits
-
 #define BLE_CONNECT BIT0
+
 
 /**
  * @brief Initializes the BLEMIDI Server
